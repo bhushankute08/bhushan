@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  # 1. A Web Server (Nginx) serving a simple page
+  webserver:
+    image: nginx:alpine
+    container_name: my-nginx-container
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web-content:/usr/share/nginx/html:ro # 'ro' makes it read-only inside the container
+    restart: unless-stopped
+    depends_on:
+      - database
+      - cache
+
+  # 2. A Database (MySQL) with a persistent volume for data
+  database:
+    image: mysql:8
+    container_name: my-mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword # Change this in production!
+      MYSQL_DATABASE: my_app_db
+      MYSQL_USER: my_user
+      MYSQL_PASSWORD: userpassword      # Change this in production!
+    volumes:
+      - mysql_data:/var/lib/mysql       # Named volume for database persistence
+    restart: unless-stopped
+
+  # 3. A Cache (Redis) with a persistent volume for optional data snapshotting
+  cache:
+    image: redis:alpine
+    container_name: my-redis-container
+    command: redis-server --appendonly yes # Enables persistence
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+# Define the named volumes here. Docker will manage their storage location.
+volumes:
+  mysql_data:
+  redis_data:
